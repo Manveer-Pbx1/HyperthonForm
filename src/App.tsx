@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { formSchema } from '@/lib/schema';
 import saveData from './api/google-sheets';
+import { z } from 'zod';
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -49,7 +50,7 @@ export default function App() {
     if (teamMemberCount < 2) {
       setTeamMemberCount(prev => prev + 1);
       const currentTeamMembers = form.getValues('teamMembers') || [];
-      form.setValue('teamMembers', [...currentTeamMembers, {}]);
+      form.setValue('teamMembers', [...currentTeamMembers, { fullName: '', rollNo: '', email: '', branch: '' }]);
     }
   };
 
