@@ -19,7 +19,7 @@ jobs:
           node-version: '18'
 
       - name: Install frontend dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Run ESLint
         run: npx eslint .
