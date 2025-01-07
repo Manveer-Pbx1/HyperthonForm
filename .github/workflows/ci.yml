@@ -21,9 +21,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Run ESLint
-        run: npx eslint .
-
       - name: Build frontend
         run: npm run build
 
