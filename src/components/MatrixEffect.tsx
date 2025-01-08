@@ -56,27 +56,31 @@ export const MatrixEffect = () => {
     return () => window.removeEventListener('keypress', handleKeyPress);
   }, [addLetter]);
 
-  // Handle touch events and auto-generation for mobile
+  // Handle touch events for mobile - removed auto-generation
   useEffect(() => {
     if (!isMobile) return;
 
-    const touchHandler = () => addLetter();
-    const interval = setInterval(() => addLetter(), 500);
-    
+    const touchHandler = () => addLetter(CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]);
     document.addEventListener('touchstart', touchHandler);
     
     return () => {
       document.removeEventListener('touchstart', touchHandler);
-      clearInterval(interval);
     };
   }, [isMobile, addLetter]);
 
-  // Cleanup effect
+  // Cleanup stale letters
   useEffect(() => {
+    const cleanup = setInterval(() => {
+      setLetters(prev => prev.filter(letter => 
+        document.documentElement.clientHeight > letter.x
+      ));
+    }, isMobile ? 4000 : 8000);
+
     return () => {
+      clearInterval(cleanup);
       isActive.current = false;
     };
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
