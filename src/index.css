@@ -35,13 +35,13 @@ body {
   background-color: #242424;
 }
 
-.min-h-screen {
+/* .min-h-screen {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   background-color: #242424;
-}
+} */
 
 h1 {
   font-size: 3.2em;
@@ -142,5 +142,64 @@ button:focus-visible {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.circuit-decoration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0; 
+  overflow: hidden;
+}
+
+.circuit-line {
+  position: absolute;
+  background: linear-gradient(90deg, transparent, #00ff8066, transparent); /* Made more visible */
+  height: 3px; 
+  filter: drop-shadow(0 0 5px #00ff80);
+}
+
+/* .circuit-dot {
+  position: absolute;
+  width: 8px; 
+  height: 8px;
+  background: #00ff80;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #00ff80; 
+  z-index: 1;
+} */
+
+@keyframes vineGrow {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.5; 
+  }
+}
+
+.matrix-letter {
+  opacity: 0;
+  transform: translateY(-20px) scale(2);
+}
+
+@keyframes fall {
+  0% {
+    opacity: 1;
+    transform: translateY(-20px) scale(2);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(50vh) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) scale(1);
   }
 }
