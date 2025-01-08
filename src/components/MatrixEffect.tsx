@@ -4,8 +4,8 @@ interface FallingLetter {
   id: number;
   char: string;
   x: number;
-  delay: number;
   speed: number;
+  y?: number; // Optional to track position for cleanup logic
 }
 
 export const MatrixEffect = () => {
@@ -16,18 +16,19 @@ export const MatrixEffect = () => {
 
   const addLetter = (char: string) => {
     if (char.length === 1) {
-      if (isMobile && letters.length > 15) {
-        setLetters(prev => [...prev.slice(-15)]);
-      }
-      
       const x = Math.random() * (window.innerWidth - 20); // Prevent letters too close to edges
-      setLetters(prev => [...prev, {
-        id: nextId++,
-        char,
-        x,
-        delay: Math.random() * 0.1,
-        speed: isMobile ? 1.5 + Math.random() : 2 + Math.random()
-      }]);
+      const speed = isMobile ? 1.5 + Math.random() : 2 + Math.random();
+      
+      setLetters(prev => [
+        ...prev,
+        {
+          id: nextId++,
+          char,
+          x,
+          speed,
+          y: 0, // Start from the top
+        },
+      ]);
     }
   };
 
@@ -36,24 +37,22 @@ export const MatrixEffect = () => {
       addLetter(event.key);
     };
 
-    window.addEventListener('keypress', handleKeyPress);
-    return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [letters.length]);
+    window.addEventListener("keypress", handleKeyPress);
+    return () => window.removeEventListener("keypress", handleKeyPress);
+  }, []);
 
   useEffect(() => {
     const cleanup = setInterval(() => {
-      setLetters(prev => prev.filter(letter => 
-        document.documentElement.clientHeight > letter.x
-      ));
-    }, isMobile ? 4000 : 8000);
+      setLetters(prev => 
+        prev.filter(letter => letter.y! < window.innerHeight)
+      );
+    }, 1000);
 
     return () => clearInterval(cleanup);
-  }, [isMobile]);
+  }, []);
 
   const focusInput = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    inputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -64,10 +63,10 @@ export const MatrixEffect = () => {
 
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
         onClick={focusInput}
-        onTouchStart={focusInput} // Handle touch events for Android
+        onTouchStart={focusInput}
       >
         {letters.map((letter) => (
           <div
@@ -76,9 +75,7 @@ export const MatrixEffect = () => {
             style={{
               left: `${letter.x}px`,
               animation: `fall ${letter.speed}s linear forwards`,
-              animationDelay: `${letter.delay}s`,
-              willChange: 'transform',
-              transform: 'translateZ(0)'
+              WebkitAnimation: `fall ${letter.speed}s linear forwards`,
             }}
           >
             {letter.char}
@@ -93,7 +90,7 @@ export const MatrixEffect = () => {
           onInput={(e) => {
             const lastChar = (e.target as HTMLInputElement).value.slice(-1);
             addLetter(lastChar);
-            (e.target as HTMLInputElement).value = ''; // Clear input after each character
+            (e.target as HTMLInputElement).value = ""; // Clear input after each character
           }}
           autoComplete="off"
           autoCorrect="off"
