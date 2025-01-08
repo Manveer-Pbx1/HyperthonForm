@@ -56,11 +56,18 @@ export const MatrixEffect = () => {
     }
   };
 
+  useEffect(() => {
+    if (isMobile && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isMobile]);
+
   return (
     <>
       <div 
         className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
         onClick={focusInput}
+        onTouchStart={focusInput} // Handle touch events for Android
       >
         {letters.map((letter) => (
           <div
