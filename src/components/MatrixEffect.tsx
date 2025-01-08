@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface FallingLetter {
   id: number;
@@ -8,67 +8,38 @@ interface FallingLetter {
   speed: number;
 }
 
-const MOBILE_MAX_LETTERS = 20;
-const CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
 export const MatrixEffect = () => {
   const [letters, setLetters] = useState<FallingLetter[]>([]);
   const [isMobile] = useState(() => window.innerWidth < 768);
-  const idCounter = useRef(0);
-  const isActive = useRef(true);
+  const inputRef = useRef<HTMLInputElement>(null);
+  let nextId = 0;
 
-  const addLetter = useCallback((char?: string) => {
-    if (!isActive.current) return;
-    
-    const randomChar = char || CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
-    const x = Math.random() * window.innerWidth;
-    
-    setLetters(prev => {
-      if (isMobile && prev.length >= MOBILE_MAX_LETTERS) {
-        return [...prev.slice(1), {
-          id: idCounter.current++,
-          char: randomChar,
-          x,
-          delay: Math.random() * 0.1,
-          speed: isMobile ? 1.5 + Math.random() : 2 + Math.random()
-        }];
+  const addLetter = (char: string) => {
+    if (char.length === 1) {
+      if (isMobile && letters.length > 15) {
+        setLetters(prev => [...prev.slice(-15)]);
       }
       
-      return [...prev, {
-        id: idCounter.current++,
-        char: randomChar,
+      const x = Math.random() * (window.innerWidth - 20); // Prevent letters too close to edges
+      setLetters(prev => [...prev, {
+        id: nextId++,
+        char,
         x,
         delay: Math.random() * 0.1,
         speed: isMobile ? 1.5 + Math.random() : 2 + Math.random()
-      }];
-    });
-  }, [isMobile]);
+      }]);
+    }
+  };
 
-  // Handle keyboard events
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key.length === 1) {
-        addLetter(event.key);
-      }
+      addLetter(event.key);
     };
 
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [addLetter]);
+  }, [letters.length]);
 
-  // Handle touch events for mobile - removed auto-generation
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const touchHandler = () => addLetter(CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]);
-    document.addEventListener('touchstart', touchHandler);
-    
-    return () => {
-      document.removeEventListener('touchstart', touchHandler);
-    };
-  }, [isMobile, addLetter]);
-
-  // Cleanup stale letters
   useEffect(() => {
     const cleanup = setInterval(() => {
       setLetters(prev => prev.filter(letter => 
@@ -76,29 +47,53 @@ export const MatrixEffect = () => {
       ));
     }, isMobile ? 4000 : 8000);
 
-    return () => {
-      clearInterval(cleanup);
-      isActive.current = false;
-    };
+    return () => clearInterval(cleanup);
   }, [isMobile]);
 
+  const focusInput = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {letters.map((letter) => (
-        <div
-          key={letter.id}
-          className="absolute text-[#00ff80] font-mono text-xl matrix-letter"
-          style={{
-            left: `${letter.x}px`,
-            animation: `fall ${letter.speed}s linear forwards`,
-            animationDelay: `${letter.delay}s`,
-            willChange: 'transform',
-            transform: 'translateZ(0)'
+    <>
+      <div 
+        className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
+        onClick={focusInput}
+      >
+        {letters.map((letter) => (
+          <div
+            key={letter.id}
+            className="absolute text-[#00ff80] font-mono text-xl matrix-letter"
+            style={{
+              left: `${letter.x}px`,
+              animation: `fall ${letter.speed}s linear forwards`,
+              animationDelay: `${letter.delay}s`,
+              willChange: 'transform',
+              transform: 'translateZ(0)'
+            }}
+          >
+            {letter.char}
+          </div>
+        ))}
+      </div>
+      {isMobile && (
+        <input
+          ref={inputRef}
+          type="text"
+          className="opacity-0 fixed bottom-0 left-0 w-full h-12 z-50"
+          onChange={(e) => {
+            const lastChar = e.target.value.slice(-1);
+            addLetter(lastChar);
+            e.target.value = ''; // Clear input after each character
           }}
-        >
-          {letter.char}
-        </div>
-      ))}
-    </div>
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+        />
+      )}
+    </>
   );
 };
