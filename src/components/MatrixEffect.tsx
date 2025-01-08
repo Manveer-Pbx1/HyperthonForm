@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 interface FallingLetter {
   id: number;
@@ -8,43 +8,75 @@ interface FallingLetter {
   speed: number;
 }
 
+const MOBILE_MAX_LETTERS = 20;
+const CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 export const MatrixEffect = () => {
   const [letters, setLetters] = useState<FallingLetter[]>([]);
   const [isMobile] = useState(() => window.innerWidth < 768);
-  let nextId = 0;
+  const idCounter = useRef(0);
+  const isActive = useRef(true);
 
+  const addLetter = useCallback((char?: string) => {
+    if (!isActive.current) return;
+    
+    const randomChar = char || CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+    const x = Math.random() * window.innerWidth;
+    
+    setLetters(prev => {
+      if (isMobile && prev.length >= MOBILE_MAX_LETTERS) {
+        return [...prev.slice(1), {
+          id: idCounter.current++,
+          char: randomChar,
+          x,
+          delay: Math.random() * 0.1,
+          speed: isMobile ? 1.5 + Math.random() : 2 + Math.random()
+        }];
+      }
+      
+      return [...prev, {
+        id: idCounter.current++,
+        char: randomChar,
+        x,
+        delay: Math.random() * 0.1,
+        speed: isMobile ? 1.5 + Math.random() : 2 + Math.random()
+      }];
+    });
+  }, [isMobile]);
+
+  // Handle keyboard events
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      const char = event.key;
-      if (char.length === 1) {
-        // Limit number of particles on mobile
-        if (isMobile && letters.length > 15) return;
-        
-        const x = Math.random() * window.innerWidth;
-        setLetters(prev => [...prev, {
-          id: nextId++,
-          char,
-          x,
-          delay: Math.random() * 0.1, // Reduced delay
-          speed: isMobile ? 1.5 + Math.random() : 2 + Math.random() // Faster on mobile
-        }]);
+      if (event.key.length === 1) {
+        addLetter(event.key);
       }
     };
 
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [isMobile, letters.length]);
+  }, [addLetter]);
 
-  // Cleanup more frequently on mobile
+  // Handle touch events and auto-generation for mobile
   useEffect(() => {
-    const cleanup = setInterval(() => {
-      setLetters(prev => prev.filter(letter => 
-        document.documentElement.clientHeight > letter.x
-      ));
-    }, isMobile ? 4000 : 8000);
+    if (!isMobile) return;
 
-    return () => clearInterval(cleanup);
-  }, [isMobile]);
+    const touchHandler = () => addLetter();
+    const interval = setInterval(() => addLetter(), 500);
+    
+    document.addEventListener('touchstart', touchHandler);
+    
+    return () => {
+      document.removeEventListener('touchstart', touchHandler);
+      clearInterval(interval);
+    };
+  }, [isMobile, addLetter]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      isActive.current = false;
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -56,8 +88,8 @@ export const MatrixEffect = () => {
             left: `${letter.x}px`,
             animation: `fall ${letter.speed}s linear forwards`,
             animationDelay: `${letter.delay}s`,
-            willChange: 'transform', // Performance optimization
-            transform: 'translateZ(0)' // Enable hardware acceleration
+            willChange: 'transform',
+            transform: 'translateZ(0)'
           }}
         >
           {letter.char}
