@@ -204,6 +204,21 @@ button:focus-visible {
   }
 }
 
+@-webkit-keyframes fall {
+  0% {
+    opacity: 1;
+    -webkit-transform: translateY(-20px) scale(1.5);
+  }
+  50% {
+    opacity: 0.8;
+    -webkit-transform: translateY(50vh) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    -webkit-transform: translateY(100vh) scale(1);
+  }
+}
+
 @media (max-width: 768px) {
   .matrix-letter {
     transform: translateY(-20px) scale(1.2);

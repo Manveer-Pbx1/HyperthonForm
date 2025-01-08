@@ -90,10 +90,10 @@ export const MatrixEffect = () => {
           ref={inputRef}
           type="text"
           className="opacity-0 fixed bottom-0 left-0 w-full h-12 z-50"
-          onChange={(e) => {
-            const lastChar = e.target.value.slice(-1);
+          onInput={(e) => {
+            const lastChar = (e.target as HTMLInputElement).value.slice(-1);
             addLetter(lastChar);
-            e.target.value = ''; // Clear input after each character
+            (e.target as HTMLInputElement).value = ''; // Clear input after each character
           }}
           autoComplete="off"
           autoCorrect="off"
